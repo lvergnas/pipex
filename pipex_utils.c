@@ -6,7 +6,7 @@
 /*   By: lvergnas <lvergnas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 14:39:37 by lvergnas          #+#    #+#             */
-/*   Updated: 2023/02/27 14:42:52 by lvergnas         ###   ########.fr       */
+/*   Updated: 2023/05/03 14:14:03 by lvergnas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,4 +71,43 @@ char	*ft_strjoin(char *s1, char *s2)
 		index++;
 	}
 	return (str);
+}
+
+int	find_path_in_env(char **env, char *tofind)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	while (env[i])
+	{
+		j = 0;
+		while (j < (int)ft_strlen(tofind))
+		{
+			if (env[i][j] != tofind[j])
+				break ;
+			j++;
+		}
+		if (j == (int)ft_strlen(tofind))
+			return (i);
+		i++;
+	}
+	return (-1);
+}
+
+void	*ft_calloc(size_t count, size_t size)
+{
+	void			*ptr;
+	unsigned int	index;
+
+	ptr = malloc(count * size);
+	if (!ptr)
+		return (0);
+	index = 0;
+	while (index < (count * size))
+	{
+		((char *)ptr)[index] = '\0';
+		index++;
+	}
+	return (ptr);
 }
