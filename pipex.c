@@ -3,15 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lvergnas <lvergnas@student.42.fr>          +#+  +:+       +#+        */
+/*   By: loura <loura@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 13:49:25 by lvergnas          #+#    #+#             */
-/*   Updated: 2023/09/18 12:21:24 by lvergnas         ###   ########.fr       */
+/*   Updated: 2023/09/27 12:16:50 by loura            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
-#include <stdio.h>
 
 static char	*extract_cmd(char *raw_cmd)
 {
@@ -72,30 +71,44 @@ static char	*find_path(char **env, char *cmd)
 	}
 	return (path);
 }
+char *find_env(char **env)
+{
+	int		i;
+	char	*path;
+	char	**them_paths;
+
+	path = ft_strtrim(env[find_path_in_env(env, "PATH=")], "PATH=");
+	if (!path)
+		return (NULL);
+	them_paths = ft_split(path, ':');
+	if (!them_paths)
+		return (NULL);
+	i = 0;
+	while (them_paths[i])
+	{
+		path = ft_strjoin(them_paths[i], cmd);
+		if (access(path, F_OK))
+			break ;
+		free(path);
+		i++;
+	}
+	return (path);
+}
 
 int	main(int argc, char **argv, char **env)
 {
-	t_pipex	pipex;
-	pid_t	pid;
-	int		fd;
-	int		i;
-	char	**cmd;
-	int		pipefd[2];
+	t_pipex pipex;
 
-	i = 0;
 	if (argc != 5)
-	{
-		perror("Error, the number of arguments is incorrect");
-		exit(EXIT_FAILURE);
-	}
+		msg_error("Error, the number of arguments is incorrect");
 	pipex.in_fd = open(argv[1], O_RDONLY);
 	if (pipex.in_fd < 0)
-	{
-		perror("Pipe failed");
-		exit(EXIT_FAILURE);
-	}
-	cmd = (char **)malloc(sizeof(char *) * (4));
-	cmd[0] = find_path(env, extract_cmd(argv[2]));
+		msg_error("Error infile");
+	pipex.out_fd = open(argv[argc - 1], O_CREAT | O_RDWR);
+	if (pipex.out_fd < 0)
+		msg_error("Error outfile");
+	pipex.env_path = find_env(env);
+	pipex.cmd_path[0] = find_path(env, extract_cmd(argv[2]));
 	if (!cmd[0])
 	{
 		perror("cmd path doesn't exist");

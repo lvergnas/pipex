@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lvergnas <lvergnas@student.42.fr>          +#+  +:+       +#+        */
+/*   By: loura <loura@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 13:49:27 by lvergnas          #+#    #+#             */
-/*   Updated: 2023/09/18 12:18:55 by lvergnas         ###   ########.fr       */
+/*   Updated: 2023/09/27 12:08:09 by loura            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ typedef struct s_pipex
 	int		in_fd;
 	int		out_fd;
 	char	*cmd;
-	char	*path;
+	char	*env_path;
 	char	**cmd_path;
 	char	**cmd_args;
 }t_pipex;
@@ -40,5 +40,6 @@ char	**ft_split(char *s, char c);
 char	*ft_strtrim(char *s1, char const *set);
 int		find_path_in_env(char **env, char *tofind);
 void	*ft_calloc(size_t count, size_t size);
+void	msg_error(char *error_type);
 
 #endif
