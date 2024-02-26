@@ -6,7 +6,7 @@
 /*   By: lvergnas <lvergnas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/27 13:51:57 by lvergnas          #+#    #+#             */
-/*   Updated: 2023/04/27 13:54:19 by lvergnas         ###   ########.fr       */
+/*   Updated: 2023/10/04 11:26:59 by lvergnas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,4 +87,18 @@ char	**ft_split(char *s, char c)
 		return (0);
 	tab[itab] = NULL;
 	return (tab);
+}
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
+{
+	size_t	i;
+
+	if (!s1 || !s2)
+		return (0);
+	i = 0;
+	if (n == 0)
+		return (0);
+	while ((s1[i] != '\0' || s2[i] != '\0') && (s1[i] == s2[i]) && (i < n - 1))
+		i++;
+	return (((unsigned char)s1[i] - (unsigned char)s2[i]));
 }

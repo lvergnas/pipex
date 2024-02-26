@@ -3,196 +3,104 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: loura <loura@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lvergnas <lvergnas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 13:49:25 by lvergnas          #+#    #+#             */
-/*   Updated: 2023/09/27 12:16:50 by loura            ###   ########.fr       */
+/*   Updated: 2023/10/06 13:48:16 by lvergnas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-static char	*extract_cmd(char *raw_cmd)
+static char	*find_path_in_env(char **env)
 {
-	int		i;
-	char	*cmd;
+	int	i; 
 
-	i = 0;
-	while (raw_cmd[i] != ' ')
-		i++;
-	cmd = malloc(sizeof(char) * (i + 2));
-	if (!cmd)
-		return (NULL);
-	i = 0;
-	cmd[i] = '/';
-	while (raw_cmd[i] != ' ')
+	i = -1;
+	while (env[++i])
 	{
-		cmd[i + 1] = raw_cmd[i];
-		i++;
+		if (env[i][0] == 'P' & env[i][1] == 'A' & env[i][2] == 'T')
+		{
+			return (env[i] + 5);
+		}
 	}
-	cmd[i + 1] = '\0';
-	return (cmd);
-}
-
-static char	*extract_args(char *raw_cmd, char *cmd)
-{
-	char	*args;
-
-	args = ft_strtrim(raw_cmd, (const char *)cmd);
-	if (args[0] != '\0')
-	{
-		args = ft_strtrim(args, " ");
-		return (args);
-	}
-	free(args);
 	return (NULL);
 }
 
-static char	*find_path(char **env, char *cmd)
+static char	*get_cmd(char **them_paths, char *cmd)
 {
 	int		i;
-	char	*path;
-	char	**them_paths;
+	char	*cmd_temp;
+	char	*real_cmd;
 
-	path = ft_strtrim(env[find_path_in_env(env, "PATH=")], "PATH=");
-	if (!path)
-		return (NULL);
-	them_paths = ft_split(path, ':');
-	if (!them_paths)
-		return (NULL);
-	i = 0;
-	while (them_paths[i])
+	i = -1;
+	while (them_paths[++i])
 	{
-		path = ft_strjoin(them_paths[i], cmd);
-		if (access(path, F_OK))
-			break ;
-		free(path);
-		i++;
+		cmd_temp = ft_strjoin(them_paths[i], "/");
+		real_cmd = ft_strjoin(cmd_temp, cmd);
+		free(cmd_temp);
+		if (access(real_cmd, F_OK) == 0)
+			return (real_cmd);
+		free(real_cmd);
 	}
-	return (path);
+	return (NULL);
 }
-char *find_env(char **env)
-{
-	int		i;
-	char	*path;
-	char	**them_paths;
 
-	path = ft_strtrim(env[find_path_in_env(env, "PATH=")], "PATH=");
-	if (!path)
-		return (NULL);
-	them_paths = ft_split(path, ':');
-	if (!them_paths)
-		return (NULL);
-	i = 0;
-	while (them_paths[i])
+static int	exec_child1(t_pipex pipex, char **argv, char **env)
+{
+	dup2(pipex.pipefd[1], STDOUT_FILENO);
+	close(pipex.pipefd[0]);
+	dup2(pipex.in_fd, STDIN_FILENO);
+	pipex.cmd_args = ft_split(argv[2], ' ');
+	pipex.cmd = get_cmd(pipex.them_paths, pipex.cmd_args[0]);
+	if (!pipex.cmd)
 	{
-		path = ft_strjoin(them_paths[i], cmd);
-		if (access(path, F_OK))
-			break ;
-		free(path);
-		i++;
+		free_child(&pipex);
+		return (msg_error("command not found"));
 	}
-	return (path);
+	return (execve(pipex.cmd, pipex.cmd_args, env));
+}
+
+static int	exec_child2(t_pipex pipex, char **argv, char **env)
+{
+	dup2(pipex.pipefd[0], STDIN_FILENO);
+	close(pipex.pipefd[1]);
+	dup2(pipex.out_fd, STDOUT_FILENO);
+	pipex.cmd_args = ft_split(argv[3], ' ');
+	pipex.cmd = get_cmd(pipex.them_paths, pipex.cmd_args[0]);
+	if (!pipex.cmd)
+	{
+		free_child(&pipex);
+		return (msg_error("command not found"));
+	}
+	return (execve(pipex.cmd, pipex.cmd_args, env));
 }
 
 int	main(int argc, char **argv, char **env)
 {
-	t_pipex pipex;
+	t_pipex	pipex;
 
 	if (argc != 5)
-		msg_error("Error, the number of arguments is incorrect");
-	pipex.in_fd = open(argv[1], O_RDONLY);
+		return (msg_error("Argument error"));
+	if (ft_strncmp(argv[1] + (ft_strlen(argv[1]) - 4), ".txt", 4) == 0)
+		pipex.in_fd = open(argv[1], O_RDONLY);
 	if (pipex.in_fd < 0)
-		msg_error("Error infile");
-	pipex.out_fd = open(argv[argc - 1], O_CREAT | O_RDWR);
+		return (msg_error("Error infile"));
+	pipex.out_fd = open(argv[argc - 1], O_TRUNC | O_CREAT | O_RDWR, 0666);
 	if (pipex.out_fd < 0)
-		msg_error("Error outfile");
-	pipex.env_path = find_env(env);
-	pipex.cmd_path[0] = find_path(env, extract_cmd(argv[2]));
-	if (!cmd[0])
-	{
-		perror("cmd path doesn't exist");
-		exit(EXIT_FAILURE);
-	}
-	cmd[1] = extract_args(argv[2], extract_cmd(argv[2]));
-	if (!cmd[1])
-		cmd[1] = argv[1];
-	else
-		cmd[2] = argv[1];
-	if (!cmd[1])
-	{
-		perror("args does't exist");
-		exit(EXIT_FAILURE);
-	}
-	cmd[3] = NULL;
-	pid = fork();
-	if (pid == -1)
-	{
-		perror("fork failed");
-		exit(EXIT_FAILURE);
-	}
-	else if (pid == 0)
-	{
-		close(pipefd[0]);
-		if (dup2(pipefd[1], STDOUT_FILENO) == -1)
-		{
-			perror("dup2 failed");
-			exit(EXIT_FAILURE);
-		}
-		printf("AALO");
-		if (execve(cmd[0], cmd, env) == -1)
-		{
-			perror("execve 1 failed");
-			exit(EXIT_FAILURE);
-		}
-	}
-	else
-	{
-		if (wait(NULL) == -1)
-		{
-			perror("wait() error :()");
-			exit(EXIT_FAILURE);
-		}
-		close(pipefd[1]);
-		pid = fork();
-		if (pid == -1)
-		{
-			perror("fork2 failed");
-			exit(EXIT_FAILURE);
-		}
-		else if (pid == 0)
-		{
-			close(pipefd[1]);
-			if (dup2(pipefd[0], STDIN_FILENO) == -1)
-			{
-				perror("dup2 failed (2eprocess)");
-				exit(EXIT_FAILURE);
-			}
-			fd = open(argv[4], O_WRONLY | O_CREAT, 0666);
-			if (fd == -1)
-			{
-				perror("open/create output.txt failed");
-				exit(EXIT_FAILURE);
-			}
-			dup2(fd, STDOUT_FILENO);
-			cmd[0] = find_path(env, extract_cmd(argv[3]));
-			if (!cmd[0])
-				exit(EXIT_FAILURE);
-			cmd[1] = extract_args(argv[3], extract_cmd(argv[3]));
-			cmd[2] = NULL;
-			execve(cmd[0], cmd, env);
-			perror("execve 2 failed");
-			exit(EXIT_FAILURE);
-		}
-		else
-		{
-			if (wait(NULL) == -1)
-			{
-				perror("wait() error");
-				exit(EXIT_FAILURE);
-			}
-			close(pipefd[0]);
-		}
-	}
+		return (msg_error("Error outfile"));
+	pipex.env_path = find_path_in_env(env);
+	pipex.them_paths = ft_split(pipex.env_path, ':');
+	pipe(pipex.pipefd);
+	pipex.pid = fork();
+	if (pipex.pid == 0)
+		exec_child1(pipex, argv, env);
+	waitpid(pipex.pid, NULL, 0);
+	close(pipex.pipefd[1]);
+	pipex.pid = fork();
+	if (pipex.pid == 0)
+		exec_child2(pipex, argv, env);
+	waitpid(pipex.pid, NULL, 0);
+	free_all(&pipex);
 	return (0);
 }

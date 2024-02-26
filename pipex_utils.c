@@ -6,7 +6,7 @@
 /*   By: lvergnas <lvergnas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/27 14:39:37 by lvergnas          #+#    #+#             */
-/*   Updated: 2023/05/03 14:14:03 by lvergnas         ###   ########.fr       */
+/*   Updated: 2023/10/06 13:48:55 by lvergnas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,26 +22,6 @@ size_t	ft_strlen(const char *str)
 	while (((char *)str)[index])
 		index++;
 	return (index);
-}
-
-char	*ft_strchr(char *str, int ch)
-{
-	unsigned int	index;
-	char			*ptr;
-	unsigned int	len;
-
-	if (!str)
-		return (0);
-	ptr = (char *)str;
-	len = ft_strlen(ptr);
-	index = 0;
-	while (index <= len)
-	{
-		if (ptr[index] == ((char)ch))
-			return (&ptr[index]);
-		index++;
-	}
-	return (0);
 }
 
 char	*ft_strjoin(char *s1, char *s2)
@@ -73,41 +53,31 @@ char	*ft_strjoin(char *s1, char *s2)
 	return (str);
 }
 
-int	find_path_in_env(char **env, char *tofind)
+int	msg_error(char *error_type)
 {
-	int	i;
-	int	j;
-
-	i = 0;
-	while (env[i])
-	{
-		j = 0;
-		while (j < (int)ft_strlen(tofind))
-		{
-			if (env[i][j] != tofind[j])
-				break ;
-			j++;
-		}
-		if (j == (int)ft_strlen(tofind))
-			return (i);
-		i++;
-	}
-	return (-1);
+	perror(error_type);
+	exit(EXIT_FAILURE);
 }
 
-void	*ft_calloc(size_t count, size_t size)
+void	free_child(t_pipex *pipex)
 {
-	void			*ptr;
-	unsigned int	index;
+	int	i;
 
-	ptr = malloc(count * size);
-	if (!ptr)
-		return (0);
-	index = 0;
-	while (index < (count * size))
-	{
-		((char *)ptr)[index] = '\0';
-		index++;
-	}
-	return (ptr);
+	i = -1;
+	while (pipex->cmd_args[++i])
+		free (pipex->cmd_args[i]);
+	free(pipex->cmd_args);
+	free(pipex->cmd);
+}
+
+void	free_all(t_pipex *pipex)
+{
+	int	i;
+
+	close(pipex->in_fd);
+	close(pipex->out_fd);
+	i = -1;
+	while (pipex->them_paths[++i])
+		free(pipex->them_paths[i]);
+	free(pipex->them_paths);
 }

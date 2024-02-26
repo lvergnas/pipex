@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: loura <loura@student.42.fr>                +#+  +:+       +#+         #
+#    By: lvergnas <lvergnas@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/02/27 13:49:30 by lvergnas          #+#    #+#              #
-#    Updated: 2023/09/27 11:53:38 by loura            ###   ########.fr        #
+#    Updated: 2023/10/06 13:46:30 by lvergnas         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ FLAGS	= 	-Wall -Werror -Wextra
 RM		= 	rm -rf
 NAME	=	pipex
 OBJ		=	$(SRC:.c=.o)
-SRC		=	pipex.c pipex_utils.c ft_split.c ft_strtrim.c error.c
+SRC		=	pipex.c pipex_utils.c ft_split.c
 
 all: $(NAME)
 
